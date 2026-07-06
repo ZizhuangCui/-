@@ -123,11 +123,7 @@ class DouYinLogin(AbstractLogin):
 
     async def login_by_qrcode(self):
         utils.logger.info("[DouYinLogin.login_by_qrcode] Begin login douyin by qrcode...")
-        qrcode_img_selector = "xpath=//div[@id='animate_qrcode_container']//img"
-        base64_qrcode_img = await utils.find_login_qrcode(
-            self.context_page,
-            selector=qrcode_img_selector
-        )
+        base64_qrcode_img = await self.find_qrcode_image()
         if not base64_qrcode_img:
             utils.logger.info("[DouYinLogin.login_by_qrcode] login qrcode not found please confirm ...")
             sys.exit()
@@ -135,6 +131,37 @@ class DouYinLogin(AbstractLogin):
         partial_show_qrcode = functools.partial(utils.show_qrcode, base64_qrcode_img)
         asyncio.get_running_loop().run_in_executor(executor=None, func=partial_show_qrcode)
         await asyncio.sleep(2)
+
+    async def find_qrcode_image(self) -> str:
+        """Find Douyin QR code across old and new login dialog structures."""
+        selectors = [
+            "xpath=//div[@id='animate_qrcode_container']//img",
+            "xpath=//*[contains(@class,'qrcode') or contains(@class,'qr-code') or contains(@id,'qrcode')]//img",
+            "xpath=//img[contains(@src,'qrcode') or contains(@src,'qr_code') or contains(@src,'qr') or contains(@src,'verify')]",
+        ]
+        for selector in selectors:
+            try:
+                element = await self.context_page.wait_for_selector(selector, timeout=5000)
+                src = await element.get_attribute("src") if element else ""
+                if src:
+                    utils.logger.info(f"[DouYinLogin.find_qrcode_image] qrcode image found by selector: {selector}")
+                    return await utils.find_login_qrcode(self.context_page, selector=selector)
+            except Exception as e:
+                utils.logger.warning(f"[DouYinLogin.find_qrcode_image] selector not matched: {selector}, {e}")
+
+        canvas_selectors = [
+            "xpath=//*[contains(@class,'qrcode') or contains(@id,'qrcode')]//canvas",
+            "canvas",
+        ]
+        for selector in canvas_selectors:
+            try:
+                await self.context_page.wait_for_selector(selector, timeout=5000)
+                utils.logger.info(f"[DouYinLogin.find_qrcode_image] qrcode canvas found by selector: {selector}")
+                return await utils.find_qrcode_img_from_canvas(self.context_page, selector)
+            except Exception as e:
+                utils.logger.warning(f"[DouYinLogin.find_qrcode_image] canvas selector not matched: {selector}, {e}")
+
+        return ""
 
     async def login_by_mobile(self):
         utils.logger.info("[DouYinLogin.login_by_mobile] Begin login douyin by mobile ...")

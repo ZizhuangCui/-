@@ -25,6 +25,10 @@ function extractCategory(filename: string): string {
 // 类别显示名称
 function getCategoryLabel(category: string): string {
   const labels: Record<string, string> = {
+    'daily_summary': '每日汇总',
+    'risk_comments': '风险评论',
+    'raw_comments': '原始评论',
+    'raw_contents': '原始作品',
     'search_comments': 'Comments',
     'search_creators': 'Creators',
     'search_videos': 'Videos',
@@ -38,6 +42,7 @@ function getCategoryLabel(category: string): string {
 export function DataExplorer() {
   const { t } = useTranslation('data')
   const [activeTab, setActiveTab] = useState<string>('all')
+  const [activePlatform, setActivePlatform] = useState<string>('all')
 
   const { data, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['dataFiles'],
@@ -49,12 +54,27 @@ export function DataExplorer() {
 
   const files = data || []
 
+  const platformOptions = useMemo(() => {
+    const options = new Map<string, string>()
+    files.forEach((file) => {
+      if (file.platform && file.platform_label && file.platform !== 'reports') {
+        options.set(file.platform, file.platform_label)
+      }
+    })
+    return Array.from(options.entries()).sort((a, b) => a[1].localeCompare(b[1], 'zh-CN'))
+  }, [files])
+
+  const platformFilteredFiles = useMemo(() => {
+    if (activePlatform === 'all') return files
+    return files.filter((file) => file.platform === activePlatform)
+  }, [activePlatform, files])
+
   // 按类别分组文件
   const { categories, groupedFiles } = useMemo(() => {
     const grouped: Record<string, typeof files> = {}
 
-    files.forEach(file => {
-      const category = extractCategory(file.name)
+    platformFilteredFiles.forEach(file => {
+      const category = file.category || extractCategory(file.name)
       if (!grouped[category]) {
         grouped[category] = []
       }
@@ -67,10 +87,10 @@ export function DataExplorer() {
     )
 
     return { categories: sortedCategories, groupedFiles: grouped }
-  }, [files])
+  }, [platformFilteredFiles])
 
   // 当前显示的文件
-  const displayFiles = activeTab === 'all' ? files : (groupedFiles[activeTab] || [])
+  const displayFiles = activeTab === 'all' ? platformFilteredFiles : (groupedFiles[activeTab] || [])
 
   return (
     <div className="h-full flex flex-col">
@@ -97,8 +117,43 @@ export function DataExplorer() {
       </div>
 
       {/* Category Tabs */}
-      {files.length > 0 && categories.length > 1 && (
-        <div className="flex items-center gap-2 mb-4 flex-wrap">
+      {files.length > 0 && (
+        <div className="flex flex-col gap-3 mb-4">
+          {platformOptions.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-cyber-text-muted font-mono">平台</span>
+              <button
+                onClick={() => setActivePlatform('all')}
+                className={`px-3 py-1.5 rounded-md text-xs font-mono transition-all ${
+                  activePlatform === 'all'
+                    ? 'bg-cyber-neon-green text-black font-bold'
+                    : 'bg-cyber-bg-tertiary text-cyber-text-secondary hover:text-cyber-text-primary border border-cyber-border-subtle hover:border-cyber-neon-green/50'
+                }`}
+              >
+                全部平台 ({files.length})
+              </button>
+              {platformOptions.map(([platform, label]) => {
+                const count = files.filter((file) => file.platform === platform).length
+                return (
+                  <button
+                    key={platform}
+                    onClick={() => setActivePlatform(platform)}
+                    className={`px-3 py-1.5 rounded-md text-xs font-mono transition-all ${
+                      activePlatform === platform
+                        ? 'bg-cyber-neon-green text-black font-bold'
+                        : 'bg-cyber-bg-tertiary text-cyber-text-secondary hover:text-cyber-text-primary border border-cyber-border-subtle hover:border-cyber-neon-green/50'
+                    }`}
+                  >
+                    {label} ({count})
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {categories.length > 1 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-cyber-text-muted font-mono">文件</span>
           <button
             onClick={() => setActiveTab('all')}
             className={`px-3 py-1.5 rounded-md text-xs font-mono transition-all ${
@@ -107,7 +162,7 @@ export function DataExplorer() {
                 : 'bg-cyber-bg-tertiary text-cyber-text-secondary hover:text-cyber-text-primary border border-cyber-border-subtle hover:border-cyber-neon-cyan/50'
             }`}
           >
-            {t('explorer.allCategories')} ({files.length})
+            {t('explorer.allCategories')} ({platformFilteredFiles.length})
           </button>
           {categories.map(category => (
             <button
@@ -119,9 +174,11 @@ export function DataExplorer() {
                   : 'bg-cyber-bg-tertiary text-cyber-text-secondary hover:text-cyber-text-primary border border-cyber-border-subtle hover:border-cyber-neon-cyan/50'
               }`}
             >
-              {getCategoryLabel(category)} ({groupedFiles[category].length})
+            {getCategoryLabel(category)} ({groupedFiles[category].length})
             </button>
           ))}
+            </div>
+          )}
         </div>
       )}
 

@@ -111,6 +111,10 @@ class BilibiliCrawler(AbstractCrawler):
                     urls=self.cookie_urls,
                 )
 
+            if config.LOGIN_ONLY:
+                utils.logger.info("[BilibiliCrawler.start] Login state is ready, skip crawling because login_only is enabled")
+                return
+
             crawler_type_var.set(config.CRAWLER_TYPE)
             if config.CRAWLER_TYPE == "search":
                 await self.search()

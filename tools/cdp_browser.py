@@ -442,7 +442,14 @@ class CDPBrowserManager:
             force: Whether to force cleanup browser process (ignoring AUTO_CLOSE_BROWSER config)
         """
         try:
-            # Close browser context
+            # Close browser context. When connecting to an existing user browser,
+            # never close the user's default context; just drop our references.
+            if config.CDP_CONNECT_EXISTING and self.browser_context:
+                utils.logger.info(
+                    "[CDPBrowserManager] Connected to existing browser, skipping context close"
+                )
+                self.browser_context = None
+
             if self.browser_context:
                 try:
                     # Check if context is already closed
@@ -466,7 +473,16 @@ class CDPBrowserManager:
                 finally:
                     self.browser_context = None
 
-            # Disconnect browser
+            # Disconnect browser. For an existing browser, avoid Browser.close()
+            # because CDP treats it as closing the user's browser session.
+            if config.CDP_CONNECT_EXISTING and self.browser:
+                try:
+                    utils.logger.info(
+                        "[CDPBrowserManager] Connected to existing browser, skipping browser close"
+                    )
+                finally:
+                    self.browser = None
+
             if self.browser:
                 try:
                     # Check if browser is still connected

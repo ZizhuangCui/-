@@ -225,6 +225,15 @@ async def parse_cmd(argv: Optional[Sequence[str]] = None):
                 show_default=True,
             ),
         ] = str(config.HEADLESS),
+        enable_cdp_mode: Annotated[
+            str,
+            typer.Option(
+                "--enable_cdp_mode",
+                help="Whether to use Chrome DevTools Protocol mode",
+                rich_help_panel="Runtime Configuration",
+                show_default=True,
+            ),
+        ] = str(config.ENABLE_CDP_MODE),
         save_data_option: Annotated[
             SaveDataOptionEnum,
             typer.Option(
@@ -251,6 +260,15 @@ async def parse_cmd(argv: Optional[Sequence[str]] = None):
                 rich_help_panel="Account Configuration",
             ),
         ] = config.COOKIES,
+        login_only: Annotated[
+            str,
+            typer.Option(
+                "--login_only",
+                help="Only open/check login state and exit before crawling data",
+                rich_help_panel="Account Configuration",
+                show_default=True,
+            ),
+        ] = str(config.LOGIN_ONLY),
         specified_id: Annotated[
             str,
             typer.Option(
@@ -338,6 +356,7 @@ async def parse_cmd(argv: Optional[Sequence[str]] = None):
         enable_comment = _to_bool(get_comment)
         enable_sub_comment = _to_bool(get_sub_comment)
         enable_headless = _to_bool(headless)
+        enable_cdp_mode_value = _to_bool(enable_cdp_mode)
         enable_ip_proxy_value = _to_bool(enable_ip_proxy)
         init_db_value = init_db.value if init_db else None
 
@@ -355,8 +374,10 @@ async def parse_cmd(argv: Optional[Sequence[str]] = None):
         config.ENABLE_GET_SUB_COMMENTS = enable_sub_comment
         config.HEADLESS = enable_headless
         config.CDP_HEADLESS = enable_headless
+        config.ENABLE_CDP_MODE = enable_cdp_mode_value
         config.SAVE_DATA_OPTION = save_data_option.value
         config.COOKIES = cookies
+        config.LOGIN_ONLY = _to_bool(login_only)
         config.CRAWLER_MAX_COMMENTS_COUNT_SINGLENOTES = max_comments_count_singlenotes
         config.CRAWLER_MAX_NOTES_COUNT = crawler_max_notes_count
         config.MAX_CONCURRENCY_NUM = max_concurrency_num
@@ -410,9 +431,11 @@ async def parse_cmd(argv: Optional[Sequence[str]] = None):
             get_comment=config.ENABLE_GET_COMMENTS,
             get_sub_comment=config.ENABLE_GET_SUB_COMMENTS,
             headless=config.HEADLESS,
+            enable_cdp_mode=config.ENABLE_CDP_MODE,
             save_data_option=config.SAVE_DATA_OPTION,
             init_db=init_db_value,
             cookies=config.COOKIES,
+            login_only=config.LOGIN_ONLY,
             specified_id=specified_id,
             creator_id=creator_id,
         )

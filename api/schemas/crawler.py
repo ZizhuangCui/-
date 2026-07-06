@@ -76,6 +76,26 @@ class CrawlerStartRequest(BaseModel):
     headless: bool = False
     max_notes_count: Optional[int] = Field(default=None, ge=1, le=MAX_API_LIMIT_COUNT)
     max_comments_count: Optional[int] = Field(default=None, ge=1, le=MAX_API_LIMIT_COUNT)
+    risk_words: str = ""
+    notify: bool = True
+
+
+class LoginStartRequest(BaseModel):
+    """Platform login preparation request"""
+    platform: PlatformEnum
+    login_type: LoginTypeEnum = LoginTypeEnum.QRCODE
+    cookies: str = ""
+    headless: bool = False
+
+
+class LoginStatusResponse(BaseModel):
+    """Platform login preparation status"""
+    status: Literal["idle", "running", "success", "error"]
+    platform: str
+    started_at: Optional[str] = None
+    finished_at: Optional[str] = None
+    error_message: Optional[str] = None
+    has_local_state: bool = False
 
 
 class CrawlerStatusResponse(BaseModel):

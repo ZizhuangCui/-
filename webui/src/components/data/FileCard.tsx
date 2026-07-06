@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FileJson, FileSpreadsheet, FileText, Download, Eye } from 'lucide-react'
+import { FileJson, FileSpreadsheet, FileText, Download, Eye, FolderOpen } from 'lucide-react'
+import { toast } from 'sonner'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -62,6 +63,15 @@ export function FileCard({ file }: FileCardProps) {
     window.open(url, '_blank')
   }
 
+  const handleReveal = async () => {
+    try {
+      await dataApi.revealFile(file.path)
+      toast.success('已在本地文件夹中定位')
+    } catch {
+      toast.error('无法打开本地文件位置')
+    }
+  }
+
   return (
     <>
       <Card className={`relative overflow-hidden card-scan group transition-all ${styles.border} hover:shadow-[0_0_15px_rgb(var(--cyber-neon-cyan)/0.15)]`}>
@@ -74,9 +84,12 @@ export function FileCard({ file }: FileCardProps) {
               <Icon className="w-6 h-6" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-mono font-medium text-sm text-cyber-text-primary truncate" title={file.name}>
-                {file.name}
+              <h3 className="font-mono font-medium text-sm text-cyber-text-primary truncate" title={file.display_name || file.name}>
+                {file.display_name || file.name}
               </h3>
+              <p className="text-[11px] text-cyber-text-muted mt-1 font-mono truncate" title={file.path}>
+                原始文件：{file.name}
+              </p>
               <p className="text-xs text-cyber-text-muted mt-1 font-mono">
                 {formatFileSize(file.size)}
                 {file.record_count !== null && (
@@ -86,12 +99,17 @@ export function FileCard({ file }: FileCardProps) {
               <p className="text-xs text-cyber-text-muted mt-1 font-mono">
                 {formatDateTime(file.modified_at)}
               </p>
+              {file.description && (
+                <p className="text-[11px] text-cyber-text-secondary mt-2 leading-relaxed line-clamp-2">
+                  {file.description}
+                </p>
+              )}
             </div>
           </div>
 
           <div className="flex items-center justify-between mt-3 pt-3 border-t border-cyber-border-subtle">
             <Badge variant="outline" className={`text-[10px] font-mono ${styles.badge}`}>
-              .{file.type.toUpperCase()}
+              {file.category_label || `.${file.type.toUpperCase()}`}
             </Badge>
             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               {isPreviewable && (
@@ -105,6 +123,15 @@ export function FileCard({ file }: FileCardProps) {
                   {t('file.preview')}
                 </Button>
               )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 font-mono text-cyber-neon-cyan hover:text-cyber-neon-cyan hover:bg-cyber-neon-cyan/10"
+                onClick={handleReveal}
+                title="打开本地文件位置"
+              >
+                <FolderOpen className="w-3 h-3" />
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"

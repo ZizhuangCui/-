@@ -18,7 +18,7 @@
 
 from fastapi import APIRouter, HTTPException
 
-from ..schemas import CrawlerStartRequest, CrawlerStatusResponse
+from ..schemas import CrawlerStartRequest, CrawlerStatusResponse, LoginStartRequest, LoginStatusResponse
 from ..services import crawler_manager
 
 router = APIRouter(prefix="/crawler", tags=["crawler"])
@@ -48,6 +48,26 @@ async def stop_crawler():
         raise HTTPException(status_code=500, detail="Failed to stop crawler")
 
     return {"status": "ok", "message": "Crawler stopped successfully"}
+
+
+@router.post("/login/start")
+async def start_login(request: LoginStartRequest):
+    """Start platform login preparation task"""
+    success = await crawler_manager.start_login(request)
+    if not success:
+        if request.platform.value in crawler_manager.login_processes:
+            raise HTTPException(status_code=400, detail="Login task is already running for this platform")
+        if crawler_manager.process and crawler_manager.process.poll() is None:
+            raise HTTPException(status_code=400, detail="Crawler is running; stop it before login setup")
+        raise HTTPException(status_code=500, detail="Failed to start login task")
+
+    return {"status": "ok", "message": "Login task started successfully"}
+
+
+@router.get("/login/status/{platform}", response_model=LoginStatusResponse)
+async def get_login_status(platform: str):
+    """Get platform login preparation status"""
+    return crawler_manager.get_login_status(platform)
 
 
 @router.get("/status", response_model=CrawlerStatusResponse)

@@ -95,7 +95,8 @@ class DouYinCrawler(AbstractCrawler):
                 await self.browser_context.add_init_script(path="libs/stealth.min.js")
 
             self.context_page = await self.browser_context.new_page()
-            await self.context_page.goto(self.index_url)
+            await self.context_page.goto(self.index_url, wait_until="commit", timeout=15000)
+            await self._wait_page_ready_for_client()
 
             self.dy_client = await self.create_douyin_client(httpx_proxy_format)
             if not await self.dy_client.pong(browser_context=self.browser_context):
@@ -111,6 +112,11 @@ class DouYinCrawler(AbstractCrawler):
                     browser_context=self.browser_context,
                     urls=self.cookie_urls,
                 )
+
+            if config.LOGIN_ONLY:
+                utils.logger.info("[DouYinCrawler.start] Login state is ready, skip crawling because login_only is enabled")
+                return
+
             crawler_type_var.set(config.CRAWLER_TYPE)
             if config.CRAWLER_TYPE == "search":
                 # Search for notes and retrieve their comment information.
@@ -312,10 +318,11 @@ class DouYinCrawler(AbstractCrawler):
             self.browser_context,
             urls=self.cookie_urls,
         )  # type: ignore
+        user_agent = await self._get_page_user_agent()
         douyin_client = DouYinClient(
             proxy=httpx_proxy,
             headers={
-                "User-Agent": await self.context_page.evaluate("() => navigator.userAgent"),
+                "User-Agent": user_agent,
                 "Cookie": cookie_str,
                 "Host": "www.douyin.com",
                 "Origin": "https://www.douyin.com/",
@@ -327,6 +334,29 @@ class DouYinCrawler(AbstractCrawler):
             proxy_ip_pool=self.ip_proxy_pool,  # Pass proxy pool for automatic refresh
         )
         return douyin_client
+
+    async def _wait_page_ready_for_client(self) -> None:
+        """Wait briefly for Douyin's first navigation to settle before evaluating JS."""
+        for _ in range(10):
+            try:
+                await self.context_page.wait_for_load_state("domcontentloaded", timeout=1000)
+                return
+            except Exception:
+                await asyncio.sleep(0.5)
+
+    async def _get_page_user_agent(self) -> str:
+        """Read navigator.userAgent with retries because Douyin may redirect during startup."""
+        for _ in range(8):
+            try:
+                return await self.context_page.evaluate("() => navigator.userAgent")
+            except Exception as e:
+                utils.logger.warning(f"[DouYinCrawler._get_page_user_agent] page is navigating, retry: {e}")
+                await asyncio.sleep(0.5)
+        return (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/124.0.0.0 Safari/537.36"
+        )
 
     async def launch_browser(
         self,

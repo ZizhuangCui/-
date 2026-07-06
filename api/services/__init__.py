@@ -17,5 +17,20 @@
 # 使用本代码即表示您同意遵守上述原则和LICENSE中的所有条款。
 
 from .crawler_manager import CrawlerManager, crawler_manager
+from .comment_report import CommentReportService, comment_report_service
+from .feishu_sheet_sync import FeishuSheetSyncService, feishu_sheet_sync_service
+from .broadcast_settings import BroadcastSettingsService, broadcast_settings_service
+from .monitor_scheduler import MonitorScheduler, monitor_scheduler
 
-__all__ = ["CrawlerManager", "crawler_manager"]
+__all__ = [
+    "CrawlerManager",
+    "crawler_manager",
+    "CommentReportService",
+    "comment_report_service",
+    "FeishuSheetSyncService",
+    "feishu_sheet_sync_service",
+    "BroadcastSettingsService",
+    "broadcast_settings_service",
+    "MonitorScheduler",
+    "monitor_scheduler",
+]

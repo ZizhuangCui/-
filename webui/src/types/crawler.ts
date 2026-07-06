@@ -11,6 +11,10 @@ export interface CrawlerConfig {
   save_option: string
   cookies: string
   headless: boolean
+  max_notes_count?: number
+  max_comments_count?: number
+  risk_words?: string
+  notify?: boolean
 }
 
 export interface CrawlerStatus {
@@ -30,6 +34,12 @@ export interface LogEntry {
 
 export interface DataFile {
   name: string
+  display_name?: string
+  platform?: string
+  platform_label?: string
+  category?: string
+  category_label?: string
+  description?: string
   path: string
   size: number
   modified_at: number

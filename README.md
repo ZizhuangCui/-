@@ -1,3 +1,11 @@
+# CommentGuard Killer（恶评 Killer）
+
+面向品牌/内容团队的多平台评论区风险监控工具。基于 MediaCrawler 增强了本地 WebUI、账号监控、定时扫描、风险词命中、高赞/点赞增长评论汇总、CSV 文件中心、飞书群机器人摘要播报，以及飞书多维表格 Webhook 同步方案。
+
+> 本项目继承 MediaCrawler 的学习研究用途声明。请仅监控已授权账号与自有内容，合理控制采集频率，并遵守平台规则与相关法律法规。
+
+---
+
 # 🔥 MediaCrawler - 自媒体平台爬虫 🕷️
 
 <div align="center">

@@ -1,9 +1,13 @@
 import { useState } from 'react'
 import { Toaster } from 'sonner'
+import { AppNav, type AppPage } from '@/components/layout/AppNav'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { MainContent } from '@/components/layout/MainContent'
 import { AuthorFooter } from '@/components/layout/AuthorFooter'
 import { CrawlerConfigPanel } from '@/components/config/CrawlerConfigPanel'
+import { CommentManagementPage } from '@/components/comments/CommentManagementPage'
+import { FileCenterPage } from '@/components/files/FileCenterPage'
+import { BroadcastSettingsPage } from '@/components/settings/BroadcastSettingsPage'
 import { EnvironmentCheck, isEnvChecked } from '@/components/env/EnvironmentCheck'
 import { LicenseDisclaimer, isLicenseAccepted } from '@/components/license/LicenseDisclaimer'
 
@@ -14,6 +18,7 @@ function App() {
   const [envChecked, setEnvChecked] = useState(() => isEnvChecked())
   // State for showing disclaimer manually
   const [showDisclaimer, setShowDisclaimer] = useState(false)
+  const [currentPage, setCurrentPage] = useState<AppPage>('crawler')
 
   const handleEnvCheckComplete = () => {
     setEnvChecked(true)
@@ -43,15 +48,27 @@ function App() {
       {/* Header Bar */}
       <Sidebar onShowDisclaimer={handleShowDisclaimer} />
 
-      {/* Main Area */}
-      <div className="flex-1 flex flex-col gap-4 p-4 overflow-hidden min-h-0">
-        {/* Config Panel - Primary Action Area (Always Expanded) */}
-        <div className="flex-shrink-0">
-          <CrawlerConfigPanel />
-        </div>
+      <div className="flex-1 flex overflow-hidden min-h-0">
+        <AppNav currentPage={currentPage} onPageChange={setCurrentPage} />
 
-        {/* Console - Collapsible Terminal */}
-        <MainContent />
+        {/* Main Area */}
+        {currentPage === 'crawler' ? (
+          <div className="flex-1 flex flex-col gap-4 p-4 overflow-hidden min-h-0">
+            {/* Config Panel - Primary Action Area (Always Expanded) */}
+            <div className="flex-shrink-0">
+              <CrawlerConfigPanel />
+            </div>
+
+            {/* Console - Collapsible Terminal */}
+            <MainContent />
+          </div>
+        ) : currentPage === 'comments' ? (
+          <CommentManagementPage />
+        ) : currentPage === 'files' ? (
+          <FileCenterPage />
+        ) : (
+          <BroadcastSettingsPage />
+        )}
       </div>
 
       {/* Author Footer */}

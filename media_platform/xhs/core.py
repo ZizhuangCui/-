@@ -93,7 +93,16 @@ class XiaoHongShuCrawler(AbstractCrawler):
                 await self.browser_context.add_init_script(path="libs/stealth.min.js")
 
             self.context_page = await self.browser_context.new_page()
-            await self.context_page.goto(self.index_url)
+            try:
+                await self.context_page.goto(
+                    self.index_url,
+                    wait_until="commit",
+                    timeout=15000,
+                )
+            except Exception as e:
+                utils.logger.warning(
+                    f"[XiaoHongShuCrawler.start] Index page did not fully load, continue with login state check: {e}"
+                )
 
             # Create a client to interact with the Xiaohongshu website.
             self.xhs_client = await self.create_xhs_client(httpx_proxy_format)
@@ -110,6 +119,10 @@ class XiaoHongShuCrawler(AbstractCrawler):
                     browser_context=self.browser_context,
                     urls=self.cookie_urls,
                 )
+
+            if config.LOGIN_ONLY:
+                utils.logger.info("[XiaoHongShuCrawler.start] Login state is ready, skip crawling because login_only is enabled")
+                return
 
             crawler_type_var.set(config.CRAWLER_TYPE)
             if config.CRAWLER_TYPE == "search":

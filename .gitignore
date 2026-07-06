@@ -184,3 +184,10 @@ debug_tools
 
 database/*.db
 .omx/
+
+# Local secrets
+config/feishu_bot.local.md
+config/feishu_docs.local.md
+config/feishu_bitable_webhook.local.md
+config/broadcast_settings.local.json
+config/monitor_jobs.local.json

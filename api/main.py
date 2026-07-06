@@ -32,7 +32,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-from .routers import crawler_router, data_router, websocket_router
+from .routers import crawler_router, data_router, monitor_router, settings_router, websocket_router
+from .services import monitor_scheduler
 
 # Project root directory (used for running subprocesses like uv run main.py)
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -63,7 +64,19 @@ app.add_middleware(
 # Register routers
 app.include_router(crawler_router, prefix="/api")
 app.include_router(data_router, prefix="/api")
+app.include_router(monitor_router, prefix="/api")
+app.include_router(settings_router, prefix="/api")
 app.include_router(websocket_router, prefix="/api")
+
+
+@app.on_event("startup")
+async def start_monitor_scheduler():
+    await monitor_scheduler.start()
+
+
+@app.on_event("shutdown")
+async def stop_monitor_scheduler():
+    await monitor_scheduler.stop()
 
 
 @app.get("/")
