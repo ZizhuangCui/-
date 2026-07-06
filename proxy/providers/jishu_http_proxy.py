@@ -73,7 +73,7 @@ class JiSuHttpProxy(ProxyProvider):
             url = self.api_path + "/fetchips" + '?' + urlencode(self.params)
             utils.logger.info(f"[JiSuHttpProxy.get_proxy] get ip proxy url:{url}")
             response = await client.get(url, headers={
-                "User-Agent": "MediaCrawler https://github.com/NanmiCoder/MediaCrawler",
+                "User-Agent": "CommentGuardKiller/1.0",
             })
             res_dict: Dict = response.json()
             if res_dict.get("code") == 0:

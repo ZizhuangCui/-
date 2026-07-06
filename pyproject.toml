@@ -1,8 +1,8 @@
 [project]
-name = "mediacrawler"
-author = "程序员阿江-Relakkes <relakkes@gmail.com>"
+name = "commentguard-killer"
+author = "CommentGuard Killer Team"
 version = "0.1.0"
-description = "A social media crawler project, support Xiaohongshu, Weibo, Zhihu, Bilibili, Douyin, BaiduTieBa etc."
+description = "A local comment risk monitoring dashboard for authorized social media accounts."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

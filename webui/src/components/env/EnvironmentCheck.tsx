@@ -4,7 +4,7 @@ import { CheckCircle, XCircle, Loader2, RefreshCw, AlertTriangle } from 'lucide-
 import { Button } from '@/components/ui/button'
 import { envApi, EnvCheckResult } from '@/lib/api'
 
-const ENV_CHECK_KEY = 'mediacrawler_env_checked'
+const ENV_CHECK_KEY = 'commentguard_env_checked'
 
 interface EnvironmentCheckProps {
   onCheckComplete: (success: boolean) => void

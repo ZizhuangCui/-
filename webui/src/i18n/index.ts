@@ -50,7 +50,7 @@ i18n
     detection: {
       order: ['localStorage', 'navigator'],
       caches: ['localStorage'],
-      lookupLocalStorage: 'mediacrawler_language',
+      lookupLocalStorage: 'commentguard_language',
     },
   })
 

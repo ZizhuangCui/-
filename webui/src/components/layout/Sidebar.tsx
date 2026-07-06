@@ -1,4 +1,4 @@
-import { Bug, Wifi, AlertTriangle, Github } from 'lucide-react'
+import { ShieldCheck, Wifi, AlertTriangle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/badge'
 import { useCrawlerStore } from '@/store/crawlerStore'
@@ -23,21 +23,12 @@ export function Sidebar({ onShowDisclaimer }: SidebarProps) {
   return (
     <header className="h-14 flex-shrink-0 glass-panel border-b border-cyber-border-subtle relative z-10">
       <div className="h-full px-4 flex items-center justify-between">
-        {/* Left: Logo and GitHub Star */}
+        {/* Left: Logo and product name */}
         <div className="flex items-center gap-3">
-          <Bug className="w-5 h-5 text-cyber-neon-cyan" />
+          <ShieldCheck className="w-5 h-5 text-cyber-neon-cyan" />
           <span className="font-mono font-bold text-cyber-text-primary tracking-wider text-sm">
-            MediaCrawler
+            CommentGuard Killer
           </span>
-          <a
-            href="https://github.com/NanmiCoder/MediaCrawler"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-2 py-1 rounded-md border border-cyber-border-subtle hover:border-cyber-neon-cyan hover:shadow-glow-cyan-sm transition-all bg-cyber-bg-tertiary"
-          >
-            <Github className="w-4 h-4 text-cyber-text-secondary" />
-            <span className="text-xs font-mono text-cyber-text-secondary">Star</span>
-          </a>
           {isRunning && (
             <Badge variant="running" className="text-[10px]">
               {t('status.active')}

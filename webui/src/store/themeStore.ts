@@ -8,7 +8,7 @@ interface ThemeState {
   setTheme: (theme: Theme) => void
 }
 
-const THEME_KEY = 'mediacrawler_theme'
+const THEME_KEY = 'commentguard_theme'
 
 function getSystemTheme(): 'light' | 'dark' {
   if (typeof window === 'undefined') return 'light'

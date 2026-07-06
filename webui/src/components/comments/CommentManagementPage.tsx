@@ -238,7 +238,7 @@ function AccountConfigDialog({
         <DialogHeader>
           <DialogTitle>{platform.name}账号配置</DialogTitle>
           <DialogDescription>
-            MediaCrawler 读取评论区需要可用登录态。定时监控建议使用公司授权账号 Cookie；临时测试可以使用扫码或 CDP 登录态。
+            评论采集引擎读取评论区需要可用登录态。定时监控建议使用公司授权账号 Cookie；临时测试可以使用扫码或 CDP 登录态。
           </DialogDescription>
         </DialogHeader>
 
@@ -304,7 +304,7 @@ function AccountConfigDialog({
           ) : null}
 
           <div className="rounded-md border border-cyber-neon-orange/30 bg-cyber-neon-orange/10 p-3 text-[11px] leading-relaxed text-cyber-neon-orange">
-            账号信息只保存在当前页面状态里，用于本地启动 MediaCrawler。请使用公司授权账号，并控制采集频率与数量。
+            账号信息只保存在当前页面状态里，用于本地启动评论采集引擎。请使用公司授权账号，并控制采集频率与数量。
           </div>
         </div>
 
@@ -741,7 +741,7 @@ export function CommentManagementPage() {
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-cyber-neon-orange" />
               <h1 className="text-base font-mono font-semibold text-cyber-text-primary">评论区管理</h1>
-              <Badge variant="default">MediaCrawler</Badge>
+              <Badge variant="default">采集引擎</Badge>
             </div>
             <p className="mt-1 text-xs text-cyber-text-muted">
               按账号监控抖音、小红书、Bilibili 的全部作品评论，默认保存全量 CSV，并单独输出风险评论 CSV。
@@ -754,7 +754,7 @@ export function CommentManagementPage() {
         </section>
 
         <section className="rounded-lg border border-cyber-border-subtle bg-cyber-bg-tertiary/30 p-4 grid grid-cols-1 lg:grid-cols-4 gap-3 text-xs">
-          <div className="font-mono text-cyber-text-primary">MediaCrawler 获取评论需要：</div>
+          <div className="font-mono text-cyber-text-primary">评论采集需要：</div>
           <div className="text-cyber-text-secondary">账号：Cookie 或扫码/CDP 登录态</div>
           <div className="text-cyber-text-secondary">目标：监控账号的小红书号、抖音号或 B站 UID/主页</div>
           <div className="text-cyber-text-secondary">规则：作品范围、评论范围、风险词、通知方式</div>

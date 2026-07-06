@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next'
-import { ShieldAlert, ExternalLink } from 'lucide-react'
+import { ShieldAlert, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-const LICENSE_KEY = 'mediacrawler_license_accepted'
+const LICENSE_KEY = 'commentguard_license_accepted'
 
 // 检查是否已经接受协议
 export function isLicenseAccepted(): boolean {
@@ -109,17 +109,12 @@ export function LicenseDisclaimer({ onAccept }: LicenseDisclaimerProps) {
           </ul>
         </div>
 
-        {/* License Link */}
+        {/* License note */}
         <div className="flex justify-center mb-6">
-          <a
-            href="https://github.com/NanmiCoder/MediaCrawler/blob/main/LICENSE"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-cyber-neon-cyan hover:underline text-sm font-mono"
-          >
-            <ExternalLink className="w-4 h-4" />
+          <div className="flex items-center gap-1.5 text-cyber-neon-cyan text-sm font-mono">
+            <FileText className="w-4 h-4" />
             {t('license')}
-          </a>
+          </div>
         </div>
 
         {/* Action buttons */}

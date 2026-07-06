@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2025 relakkes@gmail.com
+# Copyright (c) 2026 CommentGuard Killer Team
 #
-# This file is part of MediaCrawler project.
-# Repository: https://github.com/NanmiCoder/MediaCrawler/blob/main/tools/file_header_manager.py
-# GitHub: https://github.com/NanmiCoder
+# This file is part of CommentGuard Killer project.
+# Repository: https://github.com/ZizhuangCui/-
+# GitHub: https://github.com/ZizhuangCui
 # Licensed under NON-COMMERCIAL LEARNING LICENSE 1.1
 #
 # 声明：本代码仅供学习和研究目的使用。使用者应遵守以下原则：
@@ -32,10 +32,10 @@ import sys
 from typing import List, Tuple
 
 # Project configuration
-REPO_URL = "https://github.com/NanmiCoder/MediaCrawler"
-GITHUB_PROFILE = "https://github.com/NanmiCoder"
-EMAIL = "relakkes@gmail.com"
-COPYRIGHT_YEAR = "2025"
+REPO_URL = "https://github.com/ZizhuangCui/-"
+GITHUB_PROFILE = "https://github.com/ZizhuangCui"
+EMAIL = "CommentGuard Killer Team"
+COPYRIGHT_YEAR = "2026"
 LICENSE_TYPE = "NON-COMMERCIAL LEARNING LICENSE 1.1"
 
 # Disclaimer standard text
@@ -78,7 +78,7 @@ def generate_copyright_header(relative_path: str) -> str:
 
     header = f"""# Copyright (c) {COPYRIGHT_YEAR} {EMAIL}
 #
-# This file is part of MediaCrawler project.
+# This file is part of CommentGuard Killer project.
 # Repository: {file_url}
 # GitHub: {GITHUB_PROFILE}
 # Licensed under {LICENSE_TYPE}
@@ -98,7 +98,7 @@ def has_copyright_header(content: str) -> bool:
         True if already contains copyright declaration
     """
     # Check if contains Copyright keyword
-    return "Copyright (c)" in content and "MediaCrawler project" in content
+    return "Copyright (c)" in content and "CommentGuard Killer project" in content
 
 
 def has_disclaimer(content: str) -> bool:

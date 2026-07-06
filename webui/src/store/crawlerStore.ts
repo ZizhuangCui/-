@@ -27,7 +27,7 @@ interface CrawlerState {
 }
 
 // 持久化相关的 localStorage key
-const CLEARED_LOG_ID_KEY = 'mediacrawler_cleared_log_id'
+const CLEARED_LOG_ID_KEY = 'commentguard_cleared_log_id'
 
 // 从 localStorage 读取清除标记
 function getClearedLogIdFromStorage(): number | null {
