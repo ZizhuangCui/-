@@ -72,6 +72,10 @@ const platforms: PlatformMeta[] = [
 
 const defaultRiskWords = '版权,侵权,盗版,抄袭,搬运,未经授权,投诉,举报,律师函,起诉,下架'
 const allItemsLimit = 10000
+const xhsSafeLimits = {
+  maxNotes: 5,
+  maxComments: 20,
+}
 const knownXhsAccountMap: Record<string, string> = {
   '63566726289': '69710df20000000037003af2',
 }
@@ -85,11 +89,11 @@ const initialConfig: Record<PlatformKey, PlatformConfig> = {
     loginType: 'qrcode',
     cookies: '',
     headless: false,
-    interval: 'hourly',
+    interval: 'daily',
     maxNotesMode: 'limit',
-    maxNotes: 20,
+    maxNotes: xhsSafeLimits.maxNotes,
     maxCommentsMode: 'limit',
-    maxComments: 50,
+    maxComments: xhsSafeLimits.maxComments,
     includeSubComments: false,
     notify: true,
   },
@@ -178,6 +182,21 @@ function intervalLabel(interval: string) {
   return '每小时'
 }
 
+function constrainPlatformConfig(platform: PlatformKey, patch: Partial<PlatformConfig>) {
+  if (platform !== 'xhs') return patch
+
+  return {
+    ...patch,
+    headless: false,
+    interval: 'daily',
+    maxNotesMode: 'limit',
+    maxNotes: Math.min(patch.maxNotes ?? xhsSafeLimits.maxNotes, xhsSafeLimits.maxNotes),
+    maxCommentsMode: 'limit',
+    maxComments: Math.min(patch.maxComments ?? xhsSafeLimits.maxComments, xhsSafeLimits.maxComments),
+    includeSubComments: false,
+  } satisfies Partial<PlatformConfig>
+}
+
 function formatDateTime(value?: string | null) {
   if (!value) return '等待运行'
   const date = new Date(value)
@@ -225,6 +244,7 @@ function AccountConfigDialog({
   const isLoginRunning = loginStatus?.status === 'running'
   const hasLoginState = loginStatus?.status === 'success' || loginStatus?.has_local_state
   const loginButtonLabel = isLoginRunning ? '正在验证' : hasLoginState ? '重新验证登录态' : '打开扫码登录'
+  const isXhs = platform.id === 'xhs'
 
   return (
     <Dialog>
@@ -258,8 +278,14 @@ function AccountConfigDialog({
             </div>
 
             <label className="h-[62px] px-3 rounded-md border border-cyber-border-subtle bg-cyber-bg-tertiary/40 flex items-center gap-3 cursor-pointer self-end">
-              <Checkbox checked={config.headless} onCheckedChange={(checked) => onChange({ headless: checked === true })} />
-              <span className="text-xs text-cyber-text-secondary font-mono">无头运行</span>
+              <Checkbox
+                checked={isXhs ? false : config.headless}
+                disabled={isXhs}
+                onCheckedChange={(checked) => onChange({ headless: checked === true })}
+              />
+              <span className="text-xs text-cyber-text-secondary font-mono">
+                {isXhs ? '预警保护：禁用无头' : '无头运行'}
+              </span>
             </label>
           </div>
 
@@ -344,16 +370,19 @@ function PlatformPanel({
   const words = useMemo(() => splitWords(config.riskWords), [config.riskWords])
   const status = accountStatus(config, loginStatus)
   const monitorEnabled = monitorStatus?.enabled ?? config.enabled
+  const isXhs = platform.id === 'xhs'
+  const maxNotesLimit = isXhs ? xhsSafeLimits.maxNotes : allItemsLimit
+  const maxCommentsLimit = isXhs ? xhsSafeLimits.maxComments : allItemsLimit
 
   return (
     <section className="rounded-lg glass-panel float-panel overflow-hidden">
-      <header className="px-4 py-3 border-b border-cyber-border-subtle/50 bg-cyber-bg-tertiary/30 flex items-center justify-between gap-4">
+      <header className="px-4 py-3 border-b border-cyber-border-subtle/50 bg-cyber-bg-tertiary/30 flex flex-col 2xl:flex-row 2xl:items-center 2xl:justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="h-10 w-10 rounded-md border border-cyber-border-subtle bg-cyber-bg-panel/70 flex items-center justify-center overflow-hidden">
+          <div className="h-10 w-10 flex-shrink-0 rounded-md border border-cyber-border-subtle bg-cyber-bg-panel/70 flex items-center justify-center overflow-hidden">
             <img src={platform.logo} alt="" className="h-7 w-7 object-contain" />
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
               <h2 className="text-sm font-mono font-semibold text-cyber-text-primary">{platform.name}</h2>
               <Badge variant={monitorBadgeVariant(monitorStatus)}>{monitorStatusLabel(monitorStatus)}</Badge>
             </div>
@@ -361,7 +390,7 @@ function PlatformPanel({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <AccountConfigDialog
             platform={platform}
             config={config}
@@ -371,16 +400,22 @@ function PlatformPanel({
             onStartLogin={onStartLogin}
           />
           <div
-            className={`h-9 px-2.5 rounded-md border ${status.border} bg-cyber-bg-panel/60 flex items-center gap-2`}
+            className={`h-9 min-w-[5.75rem] px-2.5 rounded-md border ${status.border} bg-cyber-bg-panel/60 flex items-center justify-center gap-2`}
             title={`账号登录状态：${status.label}`}
             aria-label={`账号登录状态：${status.label}`}
           >
-            <span className={`h-2.5 w-2.5 rounded-full ${status.color} shadow-glow-green-sm`} />
-            <span className={`text-[11px] font-mono ${status.text}`}>{status.label}</span>
+            <span className={`h-2.5 w-2.5 flex-shrink-0 rounded-full ${status.color} shadow-glow-green-sm`} />
+            <span className={`whitespace-nowrap text-[11px] font-mono ${status.text}`}>{status.label}</span>
           </div>
-          <Button variant={monitorEnabled ? 'outline' : 'default'} size="sm" onClick={onToggleMonitor} disabled={isTogglingMonitor}>
+          <Button
+            variant={monitorEnabled ? 'outline' : 'default'}
+            size="sm"
+            onClick={onToggleMonitor}
+            disabled={isTogglingMonitor}
+            className="min-w-[6.75rem]"
+          >
             {isTogglingMonitor ? <Loader2 className="h-4 w-4 animate-spin" /> : <Settings2 className="h-4 w-4" />}
-            {monitorEnabled ? '暂停监控' : '启用监控'}
+            <span className="whitespace-nowrap">{monitorEnabled ? '暂停监控' : '启用监控'}</span>
           </Button>
         </div>
       </header>
@@ -399,39 +434,39 @@ function PlatformPanel({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             <div className="space-y-2">
               <Label className="text-xs text-cyber-text-secondary font-mono">执行频率</Label>
-              <Select value={config.interval} onValueChange={(value) => onChange({ interval: value })}>
+              <Select value={isXhs ? 'daily' : config.interval} onValueChange={(value) => onChange({ interval: value })} disabled={isXhs}>
                 <SelectTrigger className="h-9 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="hourly">每小时</SelectItem>
-                  <SelectItem value="twice_daily">每天两次</SelectItem>
                   <SelectItem value="daily">每天一次</SelectItem>
+                  {!isXhs ? <SelectItem value="twice_daily">每天两次</SelectItem> : null}
+                  {!isXhs ? <SelectItem value="hourly">每小时</SelectItem> : null}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label className="text-xs text-cyber-text-secondary font-mono">每次采集量</Label>
               <div className="grid grid-cols-[132px_1fr] gap-2">
-                <Select value={config.maxNotesMode} onValueChange={(value: 'limit' | 'all') => onChange({ maxNotesMode: value })}>
+                <Select value={isXhs ? 'limit' : config.maxNotesMode} onValueChange={(value: 'limit' | 'all') => onChange({ maxNotesMode: value })} disabled={isXhs}>
                   <SelectTrigger className="h-9 text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="limit">设置数量</SelectItem>
-                    <SelectItem value="all">全笔记/视频</SelectItem>
+                    {!isXhs ? <SelectItem value="all">全笔记/视频</SelectItem> : null}
                   </SelectContent>
                 </Select>
                 <Input
                   type="number"
                   min={1}
-                  max={10000}
-                  value={config.maxNotes}
-                  disabled={config.maxNotesMode === 'all'}
-                  onChange={(event) => onChange({ maxNotes: Number(event.target.value) || 1 })}
+                  max={maxNotesLimit}
+                  value={Math.min(config.maxNotes, maxNotesLimit)}
+                  disabled={!isXhs && config.maxNotesMode === 'all'}
+                  onChange={(event) => onChange({ maxNotes: Math.min(Number(event.target.value) || 1, maxNotesLimit) })}
                   className="h-9 text-xs"
                 />
               </div>
@@ -439,22 +474,22 @@ function PlatformPanel({
             <div className="space-y-2">
               <Label className="text-xs text-cyber-text-secondary font-mono">每条评论数</Label>
               <div className="grid grid-cols-[132px_1fr] gap-2">
-                <Select value={config.maxCommentsMode} onValueChange={(value: 'limit' | 'all') => onChange({ maxCommentsMode: value })}>
+                <Select value={isXhs ? 'limit' : config.maxCommentsMode} onValueChange={(value: 'limit' | 'all') => onChange({ maxCommentsMode: value })} disabled={isXhs}>
                   <SelectTrigger className="h-9 text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="limit">设置数量</SelectItem>
-                    <SelectItem value="all">全评论爬取</SelectItem>
+                    {!isXhs ? <SelectItem value="all">全评论爬取</SelectItem> : null}
                   </SelectContent>
                 </Select>
                 <Input
                   type="number"
                   min={1}
-                  max={10000}
-                  value={config.maxComments}
-                  disabled={config.maxCommentsMode === 'all'}
-                  onChange={(event) => onChange({ maxComments: Number(event.target.value) || 1 })}
+                  max={maxCommentsLimit}
+                  value={Math.min(config.maxComments, maxCommentsLimit)}
+                  disabled={!isXhs && config.maxCommentsMode === 'all'}
+                  onChange={(event) => onChange({ maxComments: Math.min(Number(event.target.value) || 1, maxCommentsLimit) })}
                   className="h-9 text-xs"
                 />
               </div>
@@ -472,8 +507,14 @@ function PlatformPanel({
               />
             </div>
             <label className="h-9 px-3 rounded-md border border-cyber-border-subtle bg-cyber-bg-tertiary/30 flex items-center gap-3 cursor-pointer self-end">
-              <Checkbox checked={config.includeSubComments} onCheckedChange={(checked) => onChange({ includeSubComments: checked === true })} />
-              <span className="text-xs text-cyber-text-secondary font-mono">二级评论</span>
+              <Checkbox
+                checked={isXhs ? false : config.includeSubComments}
+                disabled={isXhs}
+                onCheckedChange={(checked) => onChange({ includeSubComments: checked === true })}
+              />
+              <span className="text-xs text-cyber-text-secondary font-mono">
+                {isXhs ? '预警保护：关闭二级评论' : '二级评论'}
+              </span>
             </label>
           </div>
 
@@ -513,7 +554,9 @@ function PlatformPanel({
           </div>
 
           <div className="rounded-md border border-cyber-border-subtle bg-cyber-bg-panel/50 p-3 text-[11px] leading-relaxed text-cyber-text-secondary">
-            自动任务保存在本机配置文件中。启用后会立刻扫描一次，再按{intervalLabel(config.interval)}继续执行；全部采集会使用较高上限，请控制频率。
+            {isXhs
+              ? '小红书账号已进入预警保护：自动监控不会立即首跑，仅每天一次低频扫描；如仍收到平台提醒，请暂停自动化并改为手动核查。'
+              : `自动任务保存在本机配置文件中。启用后会立刻扫描一次，再按${intervalLabel(config.interval)}继续执行；全部采集会使用较高上限，请控制频率。`}
             {monitorStatus?.last_error ? <span className="block mt-1 text-cyber-neon-pink">{monitorStatus.last_error}</span> : null}
           </div>
 
@@ -523,14 +566,14 @@ function PlatformPanel({
             <span className="text-xs text-cyber-text-secondary font-mono">命中后发送飞书群通知</span>
           </label>
 
-          <div className="flex gap-2 mt-auto">
-            <Button className="flex-1" size="sm" onClick={onScan} disabled={disabled}>
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 mt-auto">
+            <Button className="min-w-0" size="sm" onClick={onScan} disabled={disabled}>
               <Play className="h-4 w-4" />
-              立即扫描
+              <span className="truncate">立即扫描</span>
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="min-w-[5.25rem]">
               <Bot className="h-4 w-4" />
-              规则
+              <span className="whitespace-nowrap">规则</span>
             </Button>
           </div>
         </div>
@@ -552,11 +595,12 @@ export function CommentManagementPage() {
   const isBusy = isPending || status === 'running' || status === 'stopping'
 
   const updatePlatform = (platform: PlatformKey, patch: Partial<PlatformConfig>) => {
+    const safePatch = constrainPlatformConfig(platform, patch)
     setConfigs((current) => ({
       ...current,
       [platform]: {
         ...current[platform],
-        ...patch,
+        ...safePatch,
       },
     }))
   }
@@ -671,7 +715,10 @@ export function CommentManagementPage() {
   }
 
   const buildCrawlerConfig = (platform: PlatformMeta) => {
-    const config = configs[platform.id]
+    const config = {
+      ...configs[platform.id],
+      ...constrainPlatformConfig(platform.id, {}),
+    }
     if (!config.targetValue.trim()) {
       toast.error(`请先填写${platform.name}监控账号`)
       return null
@@ -689,7 +736,7 @@ export function CommentManagementPage() {
       enable_sub_comments: config.includeSubComments,
       save_option: 'csv',
       cookies: config.cookies || baseCrawlerConfig.cookies,
-      headless: config.headless || baseCrawlerConfig.headless,
+      headless: platform.id === 'xhs' ? false : config.headless || baseCrawlerConfig.headless,
       max_notes_count: config.maxNotesMode === 'all' ? allItemsLimit : config.maxNotes,
       max_comments_count: config.maxCommentsMode === 'all' ? allItemsLimit : config.maxComments,
       risk_words: config.riskWords,
@@ -720,10 +767,16 @@ export function CommentManagementPage() {
       const crawlerConfig = buildCrawlerConfig(platform)
       if (!crawlerConfig) return
 
-      const { data } = await monitorApi.enableJob(platform.id, configs[platform.id].interval, crawlerConfig, true)
+      const runImmediately = platform.id !== 'xhs'
+      const monitorInterval = platform.id === 'xhs' ? 'daily' : configs[platform.id].interval
+      const { data } = await monitorApi.enableJob(platform.id, monitorInterval, crawlerConfig, runImmediately)
       setMonitorStatuses((current) => ({ ...current, [platform.id]: data }))
       updatePlatform(platform.id, { enabled: true })
-      toast.success(`${platform.name} 自动监控已启用，正在执行第一次扫描`)
+      toast.success(
+        platform.id === 'xhs'
+          ? `${platform.name} 自动监控已启用，将在下一周期低频执行`
+          : `${platform.name} 自动监控已启用，正在执行第一次扫描`,
+      )
     } catch (error) {
       const message = error instanceof Error ? error.message : '自动监控操作失败'
       toast.error(`${platform.name} ${message}`)

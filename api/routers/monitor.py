@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from ..schemas import MonitorJobRequest, MonitorJobStatus, MonitorJobsResponse, PlatformEnum
 from ..services import monitor_scheduler
+from ..services.risk_policy import validate_monitor_risk_policy
 
 router = APIRouter(prefix="/monitor", tags=["monitor"])
 
@@ -21,6 +22,9 @@ async def get_monitor_job(platform: PlatformEnum):
 async def enable_monitor_job(platform: PlatformEnum, request: MonitorJobRequest):
     request.platform = platform
     request.config.platform = platform
+    policy_issues = validate_monitor_risk_policy(request)
+    if policy_issues:
+        raise HTTPException(status_code=400, detail="；".join(policy_issues))
     return await monitor_scheduler.enable_job(request)
 
 

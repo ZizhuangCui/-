@@ -21,12 +21,12 @@ export function Sidebar({ onShowDisclaimer }: SidebarProps) {
   const isRunning = status === 'running'
 
   return (
-    <header className="h-14 flex-shrink-0 glass-panel border-b border-cyber-border-subtle relative z-10">
-      <div className="h-full px-4 flex items-center justify-between">
+    <header className="min-h-14 flex-shrink-0 glass-panel border-b border-cyber-border-subtle relative z-10">
+      <div className="min-h-14 px-4 py-2 flex items-center justify-between gap-3">
         {/* Left: Logo and product name */}
-        <div className="flex items-center gap-3">
-          <ShieldCheck className="w-5 h-5 text-cyber-neon-cyan" />
-          <span className="font-mono font-bold text-cyber-text-primary tracking-wider text-sm">
+        <div className="flex min-w-0 flex-shrink-0 items-center gap-3">
+          <ShieldCheck className="w-5 h-5 text-cyber-neon-cyan flex-shrink-0" />
+          <span className="max-w-[11rem] whitespace-normal break-words font-mono font-bold leading-tight text-cyber-text-primary tracking-wider text-sm">
             CommentGuard Killer
           </span>
           {isRunning && (
@@ -42,21 +42,21 @@ export function Sidebar({ onShowDisclaimer }: SidebarProps) {
         {/* Center: Warning Text */}
         <button
           onClick={onShowDisclaimer}
-          className="flex items-center gap-3 px-4 py-1.5 rounded-lg border border-cyber-neon-orange/50 bg-cyber-neon-orange/10 hover:bg-cyber-neon-orange/20 transition-all cursor-pointer"
+          className="min-w-0 flex-1 max-w-3xl flex items-center gap-3 px-4 py-2 rounded-lg border border-cyber-neon-orange/50 bg-cyber-neon-orange/10 hover:bg-cyber-neon-orange/20 transition-all cursor-pointer"
         >
           <AlertTriangle className="w-4 h-4 text-cyber-neon-orange flex-shrink-0" />
-          <div className="flex items-center gap-4 text-xs font-mono">
-            <span className="text-cyber-neon-orange">
+          <div className="grid min-w-0 flex-1 grid-cols-1 xl:grid-cols-2 gap-x-5 gap-y-1 text-left text-xs font-mono leading-snug">
+            <span className="min-w-0 text-cyber-neon-orange">
               <span className="text-cyber-neon-pink font-bold">1.</span> {tLicense('content.line1')}
             </span>
-            <span className="text-cyber-neon-orange">
+            <span className="min-w-0 text-cyber-neon-orange">
               <span className="text-cyber-neon-pink font-bold">2.</span> {tLicense('content.line2')}
             </span>
           </div>
         </button>
 
         {/* Right: Actions and Status */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-shrink-0 items-center gap-3">
           {/* Theme Toggle */}
           <ThemeToggle />
           {/* Language Switch */}

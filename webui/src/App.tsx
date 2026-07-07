@@ -48,7 +48,7 @@ function App() {
       {/* Header Bar */}
       <Sidebar onShowDisclaimer={handleShowDisclaimer} />
 
-      <div className="flex-1 flex overflow-hidden min-h-0">
+      <div className="flex-1 flex overflow-hidden min-h-0 min-w-0">
         <AppNav currentPage={currentPage} onPageChange={setCurrentPage} />
 
         {/* Main Area */}

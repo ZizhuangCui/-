@@ -37,6 +37,7 @@ from ..schemas import CrawlerStartRequest, LoginStartRequest, LogEntry
 from .comment_report import comment_report_service
 from .feishu_sheet_sync import feishu_sheet_sync_service
 from .broadcast_settings import broadcast_settings_service
+from .risk_policy import XHS_CRAWL_SLEEP_SECONDS
 
 
 PLATFORM_DATA_DIRS = {
@@ -324,6 +325,8 @@ class CrawlerManager:
 
         cmd.extend(["--get_comment", "true" if config.enable_comments else "false"])
         cmd.extend(["--get_sub_comment", "true" if config.enable_sub_comments else "false"])
+        if config.platform.value == "xhs":
+            cmd.extend(["--crawler_max_sleep_sec", str(XHS_CRAWL_SLEEP_SECONDS)])
 
         if config.max_notes_count is not None:
             cmd.extend(["--crawler_max_notes_count", str(config.max_notes_count)])

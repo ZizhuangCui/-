@@ -20,6 +20,7 @@ from fastapi import APIRouter, HTTPException
 
 from ..schemas import CrawlerStartRequest, CrawlerStatusResponse, LoginStartRequest, LoginStatusResponse
 from ..services import crawler_manager
+from ..services.risk_policy import validate_crawler_risk_policy
 
 router = APIRouter(prefix="/crawler", tags=["crawler"])
 
@@ -27,6 +28,10 @@ router = APIRouter(prefix="/crawler", tags=["crawler"])
 @router.post("/start")
 async def start_crawler(request: CrawlerStartRequest):
     """Start crawler task"""
+    policy_issues = validate_crawler_risk_policy(request)
+    if policy_issues:
+        raise HTTPException(status_code=400, detail="；".join(policy_issues))
+
     success = await crawler_manager.start(request)
     if not success:
         # Handle concurrent/duplicate requests: if process is already running, return 400 instead of 500

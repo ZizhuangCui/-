@@ -89,8 +89,9 @@ class XiaoHongShuCrawler(AbstractCrawler):
                     self.user_agent,
                     headless=config.HEADLESS,
                 )
-                # stealth.min.js is a js script to prevent the website from detecting the crawler.
-                await self.browser_context.add_init_script(path="libs/stealth.min.js")
+                utils.logger.info(
+                    "[XiaoHongShuCrawler] Skip stealth script injection for XHS compliance mode"
+                )
 
             self.context_page = await self.browser_context.new_page()
             try:
