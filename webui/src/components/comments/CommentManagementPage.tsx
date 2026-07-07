@@ -70,8 +70,9 @@ const platforms: PlatformMeta[] = [
   },
 ]
 
-const defaultRiskWords = '版权,侵权,盗版,抄袭,搬运,未经授权,投诉,举报,律师函,起诉,下架'
+const defaultRiskWords = '宋威龙,版权,侵权,盗版,抄袭,搬运,未经授权,投诉,举报,律师函,起诉,下架'
 const allItemsLimit = 10000
+const monitorConfigStorageKey = 'commentguard.monitor.config.v1'
 const xhsSafeLimits = {
   maxNotes: 5,
   maxComments: 20,
@@ -89,27 +90,27 @@ const initialConfig: Record<PlatformKey, PlatformConfig> = {
     loginType: 'qrcode',
     cookies: '',
     headless: false,
-    interval: 'daily',
+    interval: 'hourly',
     maxNotesMode: 'limit',
-    maxNotes: xhsSafeLimits.maxNotes,
+    maxNotes: 20,
     maxCommentsMode: 'limit',
-    maxComments: xhsSafeLimits.maxComments,
+    maxComments: 50,
     includeSubComments: false,
     notify: true,
   },
   xhs: {
     enabled: false,
     crawlerType: 'creator',
-    targetValue: '',
+    targetValue: '63566726289',
     riskWords: defaultRiskWords,
     loginType: 'qrcode',
     cookies: '',
     headless: false,
-    interval: 'hourly',
+    interval: 'daily',
     maxNotesMode: 'limit',
-    maxNotes: 20,
+    maxNotes: xhsSafeLimits.maxNotes,
     maxCommentsMode: 'limit',
-    maxComments: 50,
+    maxComments: xhsSafeLimits.maxComments,
     includeSubComments: false,
     notify: true,
   },
@@ -197,6 +198,34 @@ function constrainPlatformConfig(platform: PlatformKey, patch: Partial<PlatformC
   } satisfies Partial<PlatformConfig>
 }
 
+function sanitizeConfig(platform: PlatformKey, config: PlatformConfig) {
+  return {
+    ...config,
+    ...constrainPlatformConfig(platform, config),
+  }
+}
+
+function loadSavedConfigs() {
+  if (typeof window === 'undefined') return initialConfig
+
+  try {
+    const raw = window.localStorage.getItem(monitorConfigStorageKey)
+    if (!raw) return initialConfig
+    const saved = JSON.parse(raw) as Partial<Record<PlatformKey, Partial<PlatformConfig>>>
+
+    return platforms.reduce<Record<PlatformKey, PlatformConfig>>((result, platform) => {
+      const merged = {
+        ...initialConfig[platform.id],
+        ...saved[platform.id],
+      }
+      result[platform.id] = sanitizeConfig(platform.id, merged)
+      return result
+    }, { ...initialConfig })
+  } catch {
+    return initialConfig
+  }
+}
+
 function formatDateTime(value?: string | null) {
   if (!value) return '等待运行'
   const date = new Date(value)
@@ -233,6 +262,7 @@ function AccountConfigDialog({
   isStartingLogin,
   onChange,
   onStartLogin,
+  onSave,
 }: {
   platform: PlatformMeta
   config: PlatformConfig
@@ -240,6 +270,7 @@ function AccountConfigDialog({
   isStartingLogin: boolean
   onChange: (config: Partial<PlatformConfig>) => void
   onStartLogin: () => void
+  onSave: () => void
 }) {
   const isLoginRunning = loginStatus?.status === 'running'
   const hasLoginState = loginStatus?.status === 'success' || loginStatus?.has_local_state
@@ -335,7 +366,7 @@ function AccountConfigDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" size="sm">保存配置</Button>
+          <Button variant="outline" size="sm" onClick={onSave}>保存配置</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -349,6 +380,7 @@ function PlatformPanel({
   isStartingLogin,
   onChange,
   onStartLogin,
+  onSave,
   onScan,
   onToggleMonitor,
   disabled,
@@ -361,6 +393,7 @@ function PlatformPanel({
   isStartingLogin: boolean
   onChange: (config: Partial<PlatformConfig>) => void
   onStartLogin: () => void
+  onSave: () => void
   onScan: () => void
   onToggleMonitor: () => void
   disabled: boolean
@@ -398,6 +431,7 @@ function PlatformPanel({
             isStartingLogin={isStartingLogin}
             onChange={onChange}
             onStartLogin={onStartLogin}
+            onSave={onSave}
           />
           <div
             className={`h-9 min-w-[5.75rem] px-2.5 rounded-md border ${status.border} bg-cyber-bg-panel/60 flex items-center justify-center gap-2`}
@@ -583,7 +617,7 @@ function PlatformPanel({
 }
 
 export function CommentManagementPage() {
-  const [configs, setConfigs] = useState(initialConfig)
+  const [configs, setConfigs] = useState(loadSavedConfigs)
   const [loginStatuses, setLoginStatuses] = useState<Partial<Record<PlatformKey, LoginStatus>>>({})
   const [monitorStatuses, setMonitorStatuses] = useState<Partial<Record<PlatformKey, MonitorJobStatus>>>({})
   const [startingLogin, setStartingLogin] = useState<PlatformKey | null>(null)
@@ -604,6 +638,17 @@ export function CommentManagementPage() {
       },
     }))
   }
+
+  const saveMonitorConfigs = useCallback(() => {
+    const sanitized = platforms.reduce<Record<PlatformKey, PlatformConfig>>((result, platform) => {
+      result[platform.id] = sanitizeConfig(platform.id, configs[platform.id])
+      return result
+    }, { ...configs })
+
+    window.localStorage.setItem(monitorConfigStorageKey, JSON.stringify(sanitized))
+    setConfigs(sanitized)
+    toast.success('配置已保存到本机')
+  }, [configs])
 
   const refreshLoginStatus = useCallback(async (platform: PlatformKey) => {
     const { data } = await crawlerApi.getLoginStatus(platform)
@@ -823,6 +868,7 @@ export function CommentManagementPage() {
               isStartingLogin={startingLogin === platform.id}
               onChange={(patch) => updatePlatform(platform.id, patch)}
               onStartLogin={() => startPlatformLogin(platform)}
+              onSave={saveMonitorConfigs}
               onScan={() => scanPlatform(platform)}
               onToggleMonitor={() => toggleMonitor(platform)}
               disabled={isBusy}
