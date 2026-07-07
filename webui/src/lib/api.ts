@@ -169,7 +169,7 @@ export interface EnvCheckResult {
 }
 
 export const envApi = {
-  check: () => api.get<EnvCheckResult>('/env/check'),
+  check: () => api.get<EnvCheckResult>('/env/check', { timeout: 45000 }),
 }
 
 export default api

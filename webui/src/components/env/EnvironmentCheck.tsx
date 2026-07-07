@@ -136,6 +136,7 @@ export function EnvironmentCheck({ onCheckComplete }: EnvironmentCheckProps) {
               <li>{t('requirementsList.1')}</li>
               <li>{t('requirementsList.2')}</li>
               <li>{t('requirementsList.3')}</li>
+              <li>{t('requirementsList.4')}</li>
             </ol>
           </div>
         )}

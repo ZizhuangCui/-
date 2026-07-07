@@ -37,6 +37,7 @@ from .services import monitor_scheduler
 
 # Project root directory (used for running subprocesses like uv run main.py)
 PROJECT_ROOT = Path(__file__).parent.parent
+ENV_CHECK_TIMEOUT_SECONDS = 20.0
 
 app = FastAPI(
     title="MediaCrawler WebUI API",
@@ -101,32 +102,42 @@ async def health_check():
 @app.get("/api/env/check")
 async def check_environment():
     """Check if MediaCrawler environment is configured correctly"""
+    command = [sys.executable, "main.py", "--help"]
+    venv_python = PROJECT_ROOT / ".venv" / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python")
+    if venv_python.exists():
+        command[0] = str(venv_python)
+
     try:
-        # Run uv run main.py --help command to check environment
+        # Run main.py --help with the same project environment used by the API.
         # Use PROJECT_ROOT so it works regardless of where uvicorn was started
         if sys.platform == "win32":
             loop = asyncio.get_running_loop()
             process = await loop.run_in_executor(
                 None,
                 lambda: subprocess.run(
-                    ["uv", "run", "main.py", "--help"],
+                    command,
                     capture_output=True,
-                    timeout=30.0,
+                    timeout=ENV_CHECK_TIMEOUT_SECONDS,
                     cwd=str(PROJECT_ROOT)
                 )
             )
             stdout, stderr = process.stdout, process.stderr  # bytes
         else:
             process = await asyncio.create_subprocess_exec(
-                "uv", "run", "main.py", "--help",
+                *command,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 cwd=str(PROJECT_ROOT)  # Project root directory
             )
-            stdout, stderr = await asyncio.wait_for(
-                process.communicate(),
-                timeout=30.0  # 30 seconds timeout
-            )
+            try:
+                stdout, stderr = await asyncio.wait_for(
+                    process.communicate(),
+                    timeout=ENV_CHECK_TIMEOUT_SECONDS
+                )
+            except asyncio.TimeoutError:
+                process.kill()
+                await process.communicate()
+                raise
         if process.returncode == 0:
             return {
                 "success": True,
@@ -144,7 +155,7 @@ async def check_environment():
         return {
             "success": False,
             "message": "Environment check timeout",
-            "error": "Command execution exceeded 30 seconds"
+            "error": f"Command execution exceeded {ENV_CHECK_TIMEOUT_SECONDS:g} seconds"
         }
     except FileNotFoundError:
         return {

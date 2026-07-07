@@ -37,6 +37,7 @@
 
 ```shell
 uv sync
+uv run playwright install chromium
 cd webui
 pnpm install
 pnpm run build
