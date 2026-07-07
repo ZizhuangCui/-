@@ -8,6 +8,25 @@ const api = axios.create({
   },
 })
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (axios.isAxiosError(error)) {
+      const detail = error.response?.data?.detail
+      const message = Array.isArray(detail)
+        ? detail.map((item) => item?.msg ?? String(item)).join('；')
+        : typeof detail === 'string'
+          ? detail
+          : error.response?.status
+            ? `请求失败，状态码 ${error.response.status}`
+            : error.message
+      return Promise.reject(new Error(message))
+    }
+
+    return Promise.reject(error)
+  },
+)
+
 // Types
 export interface CrawlerConfig {
   platform: string
